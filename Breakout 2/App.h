@@ -14,6 +14,8 @@ private:
 	sf::Time				time;
 	sf::Clock				clock;
 	sf::RectangleShape		paddle;
+	sf::RectangleShape		pLeft;
+	sf::RectangleShape		pRight;
 	sf::CircleShape			ball;
 	sf::RectangleShape		brick;
 	sf::RectangleShape		bricks[M][N];
@@ -21,19 +23,21 @@ private:
 	// Paddle
 	float paddleSpeed = 300.0f;
 	float paddleHeight = 25.0f;
-	float paddleWidth = 200.0f;
+	float paddleWidth = 66.6f;
 	float paddleY = 0.90f;
 	
 	// Ball
 	float radius = 15.0f;
-	float ballSpeedX = 150.0f;
-	float ballSpeedY = 150.0f;
+	float ballSpeed = 150.0f;
+	float ballSpeedX;
+	float ballSpeedY;
 
 	// Brick
-	float brickHeight = 100.0f;
-	float brickWidth = 50.0f;
-	float brickGap = 10.0f;
-	float windowBuffer = (window.getSize().x - N * brickWidth - (N - 1) * brickGap);
+	float brickWidth = 100.0f;
+	float brickHeight = 25.0f;
+	float brickGap = 2.5f;
+	float windowBuffer;
+	bool collidable[M][N];
 
 
 public:
