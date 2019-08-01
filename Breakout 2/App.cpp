@@ -1,3 +1,4 @@
+#include <iostream>
 #include "SFML\System.hpp"
 #include "App.h"
 
@@ -11,12 +12,18 @@ App::App(const char* title, int screenWidth, int screenHeight, int screenBpp)
 
 App::~App()
 {
-
+	for (int i = 0; i < ROW; ++i)
+	{
+		delete[] bricks[i];
+		delete[] collidable[i];
+	}
+	delete[] bricks;
+	delete[] collidable;
 }
 
 bool App::Init()
 {
-	windowBuffer = (window.getSize().x - M * brickWidth - (M - 1) * brickGap)/2;
+	windowBuffer = (window.getSize().x - COL * brickWidth - (COL - 1) * brickGap)/2;
 	ballSpeedX = ballSpeed;
 	ballSpeedY = ballSpeed;
 
@@ -35,17 +42,21 @@ bool App::Init()
 	pLeft.setPosition(sf::Vector2f(((window.getSize().x / 2.0f) - paddleWidth) - (paddleWidth / 2.0f), window.getSize().y * paddleY));
 	pRight.setPosition(sf::Vector2f(((window.getSize().x / 2.0f) + paddleWidth) - (paddleWidth / 2.0f), window.getSize().y * paddleY));
 
-	// Setting Brick to correct size
-	brick.setSize(sf::Vector2f(brickWidth, brickHeight));
-
 	// Giving bricks initial position
-	for (int j = 0; j < M; ++j)
+	bricks = new sf::RectangleShape* [ROW];
+	collidable = new bool* [ROW];
+	for (int i = 0; i < ROW; ++i)
 	{
-		for (int i = 0; i < N; ++i)
+		bricks[i] = new sf::RectangleShape[COL];
+		collidable[i] = new bool[COL];
+	}
+	for (int i = 0; i < ROW; ++i)
+	{
+		for (int j = 0; j < COL; ++j)
 		{
-			bricks[j][i].setSize(sf::Vector2f(brickWidth, brickHeight));
-			bricks[j][i].setPosition(windowBuffer + (brickWidth + brickGap) * j, (brickHeight + brickGap) * i);
-			collidable[j][i] = true;
+			bricks[i][j].setSize(sf::Vector2f(brickWidth, brickHeight));
+			bricks[i][j].setPosition(windowBuffer + (brickWidth + brickGap) * j, (brickHeight + brickGap) * i);
+			collidable[i][j] = true;
 		}
 	}
 
@@ -86,11 +97,15 @@ void App::Draw()
 	window.draw(paddle);
 	window.draw(pLeft);
 	window.draw(pRight);
-	for (int j = 0; j < M; ++j)
+
+	for (int i = 0; i < ROW; ++i)
 	{
-		for (int i = 0; i < N; i++)
+		for (int j = 0; j < COL; ++j)
 		{
-			window.draw(bricks[j][i]);
+			if (collidable[i][j])
+			{
+				window.draw(bricks[i][j]);
+			}
 		}
 	}
 
@@ -181,19 +196,16 @@ void App::Collisions()
 	}
 
 	// Ball on Brick collision
-	for (int j = 0; j < M; ++j)
+	for (int i = 0; i < ROW; ++i)
 	{
-		for (int i = 0; i < N; ++i)
+		for (int j = 0; j < COL; ++j)
 		{
-			if (ball.getGlobalBounds().intersects(bricks[j][i].getGlobalBounds()) && collidable[j][i])
+			if (ball.getGlobalBounds().intersects(bricks[i][j].getGlobalBounds()) && collidable[i][j])
 			{
 				ballSpeedY = -ballSpeedY;
-				collidable[j][i] = false;
-			}
-
-			if (collidable[j][i] == false)
-			{
-				bricks[j][i].setFillColor(sf::Color::Transparent);
+				collidable[i][j] = false;
+				++score;
+				std::cout << score + "\n";
 			}
 		}
 	}

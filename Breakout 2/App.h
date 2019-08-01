@@ -2,8 +2,6 @@
 #include "SFML/Graphics.hpp"
 #include "SFML/System.hpp"
 
-const int M = 12;
-const int N = 4;
 
 class App
 {
@@ -17,8 +15,10 @@ private:
 	sf::RectangleShape		pLeft;
 	sf::RectangleShape		pRight;
 	sf::CircleShape			ball;
-	sf::RectangleShape		brick;
-	sf::RectangleShape		bricks[M][N];
+	sf::RectangleShape**	bricks;
+
+	const int ROW = 4;
+	const int COL = 12;
 
 	// Paddle
 	float paddleSpeed = 300.0f;
@@ -37,8 +37,9 @@ private:
 	float brickHeight = 25.0f;
 	float brickGap = 2.5f;
 	float windowBuffer;
-	bool collidable[M][N];
+	bool** collidable;
 
+	int score;
 
 public:
 	App(const char* title, int screenWidth, int screenHeight, int screenBpp);
