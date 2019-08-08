@@ -1,13 +1,19 @@
 #include <iostream>
 #include "SFML\System.hpp"
 #include "App.h"
+#include "imgui.h"
+#include "imgui-SFML.h"
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/System/Clock.hpp>
+#include <SFML/Window/Event.hpp>
 
 App::App(const char* title, int screenWidth, int screenHeight, int screenBpp)
 {
 	// Setting up the game window
 	window.create(sf::VideoMode(screenWidth, screenHeight, screenBpp), title);
-	window.setFramerateLimit(60);
+	window.setFramerateLimit(0);
 	view = window.getDefaultView();
+	window.resetGLStates();
 }
 
 App::~App()
@@ -27,6 +33,7 @@ bool App::Init()
 	ballSpeedX = ballSpeed;
 	ballSpeedY = ballSpeed;
 
+	ImGui::SFML::Init(window);
 	// Giving the ball their initial positions
 	ball.setRadius(radius);
 	ball.setPosition(sf::Vector2f(0.5f * window.getSize().x, 0.8f * window.getSize().y));
@@ -38,12 +45,12 @@ bool App::Init()
 	pLeft.setFillColor(sf::Color::Red);
 	pRight.setSize(sf::Vector2f(paddleWidth, paddleHeight));
 	pRight.setFillColor(sf::Color::Blue);
-	paddle.setPosition(sf::Vector2f((window.getSize().x / 2.0f) - (paddleWidth / 2.0f), window.getSize().y  * paddleY));
+	paddle.setPosition(sf::Vector2f((window.getSize().x / 2.0f) - (paddleWidth / 2.0f), window.getSize().y * paddleY));
 	pLeft.setPosition(sf::Vector2f(((window.getSize().x / 2.0f) - paddleWidth) - (paddleWidth / 2.0f), window.getSize().y * paddleY));
 	pRight.setPosition(sf::Vector2f(((window.getSize().x / 2.0f) + paddleWidth) - (paddleWidth / 2.0f), window.getSize().y * paddleY));
 
 	// Giving bricks initial position
-	bricks = new sf::RectangleShape* [ROW];
+	bricks = new sf::RectangleShape * [ROW];
 	collidable = new bool* [ROW];
 	for (int i = 0; i < ROW; ++i)
 	{
@@ -65,27 +72,47 @@ bool App::Init()
 
 void App::Update()
 {
-	// starting clock
-	float deltaTime = clock.restart().asSeconds();
+	ImGui::SFML::Update(window, clock.restart());
 
-	// Reading player input to move paddle
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+	// starting clock
+	deltaTime = clock.restart().asSeconds();
+
+	// scene control
+	// main menu
+	if (scene == 0)
 	{
-		paddle.move(paddleSpeed * deltaTime, 0.0f);
-		pLeft.move(paddleSpeed * deltaTime, 0.0f);
-		pRight.move(paddleSpeed * deltaTime, 0.0f);
+		ImGui::Begin("Menu");
+		if (ImGui::Button("Play"))
+		{
+			scene = 1;
+		}
+		if (ImGui::Button("Editor"))
+		{
+			scene = 2;
+		}
+		ImGui::End();
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+	
+	// main game
+	if (scene == 1)
 	{
-		paddle.move(-paddleSpeed * deltaTime, 0.0f);
-		pLeft.move(-paddleSpeed * deltaTime, 0.0f);
-		pRight.move(-paddleSpeed * deltaTime, 0.0f);
+		PlayerMove();
+
+		bFreeze = 1.0f;
+
+		Collisions();
+		
+	}
+
+	//editor
+	if (scene == 2)
+	{
+		bFreeze = 0.0f;
+		Editor();
 	}
 
 	// Ball moves per frame
-	ball.move(ballSpeedX * deltaTime, ballSpeedY * deltaTime);
-
-	Collisions();
+	ball.move((ballSpeedX * deltaTime) * bFreeze, (ballSpeedY * deltaTime) * bFreeze);
 }
 
 void App::Draw()
@@ -93,18 +120,38 @@ void App::Draw()
 	// Drawing everything into game window
 	window.clear();
 	window.setView(view);
-	window.draw(ball);
-	window.draw(paddle);
-	window.draw(pLeft);
-	window.draw(pRight);
 
-	for (int i = 0; i < ROW; ++i)
+	ImGui::SFML::Render(window);
+
+	if(scene == 1)
 	{
-		for (int j = 0; j < COL; ++j)
+		window.draw(ball);
+		window.draw(paddle);
+		window.draw(pLeft);
+		window.draw(pRight);
+
+		for (int i = 0; i < ROW; ++i)
 		{
-			if (collidable[i][j])
+			for (int j = 0; j < COL; ++j)
 			{
-				window.draw(bricks[i][j]);
+				if (collidable[i][j])
+				{
+					window.draw(bricks[i][j]);
+				}
+			}
+		}
+	}
+
+	if (scene == 2)
+	{
+		for (int i = 0; i < ROW; ++i)
+		{
+			for (int j = 0; j < COL; ++j)
+			{
+				if (collidable[i][j])
+				{
+					window.draw(bricks[i][j]);
+				}
 			}
 		}
 	}
@@ -128,6 +175,7 @@ void App::Run()
 	{
 		while (window.pollEvent(event))
 		{
+			ImGui::SFML::ProcessEvent(event);
 			HandleEvents();
 		}
 		Update();
@@ -206,6 +254,44 @@ void App::Collisions()
 				collidable[i][j] = false;
 				++score;
 				std::cout << score + "\n";
+			}
+		}
+	}
+}
+
+void App::PlayerMove()
+{
+	// Reading player input to move paddle
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+	{
+		paddle.move(paddleSpeed * deltaTime, 0.0f);
+		pLeft.move(paddleSpeed * deltaTime, 0.0f);
+		pRight.move(paddleSpeed * deltaTime, 0.0f);
+	}
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+	{
+		paddle.move(-paddleSpeed * deltaTime, 0.0f);
+		pLeft.move(-paddleSpeed * deltaTime, 0.0f);
+		pRight.move(-paddleSpeed * deltaTime, 0.0f);
+	}
+
+}
+
+void App::Editor()
+{
+	for (int i = 0; i < ROW; ++i)
+	{
+		for (int j = 0; j < COL; ++j)
+		{
+			if (bricks[i][j].getGlobalBounds().contains(window.mapPixelToCoords(sf::Mouse::getPosition(window))))
+			{
+				if (event.type == sf::Event::MouseButtonPressed)
+				{
+					if (event.mouseButton.button == sf::Mouse::Left)
+					{
+						collidable[i][j] = !collidable[i][j];
+					}
+				}
 			}
 		}
 	}
