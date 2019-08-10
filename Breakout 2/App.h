@@ -1,7 +1,8 @@
 #pragma once
 #include "SFML/Graphics.hpp"
 #include "SFML/System.hpp"
-
+#include <iostream>
+#include <fstream>
 
 class App
 {
@@ -22,6 +23,12 @@ private:
 	const int ROW = 4;
 	const int COL = 12;
 	float deltaTime;
+	bool pause = false;
+	int saveCount;
+	int lineCount;
+	std::string line;
+	std::fstream save;
+	bool saved = false;
 
 	// Buttons
 	float playHeight = 50.0f;
@@ -40,7 +47,7 @@ private:
 	float ballSpeed = 1500.0f;
 	float ballSpeedX;
 	float ballSpeedY;
-	float bFreeze = 0;
+	float freeze = 0;
 
 	// Brick
 	float brickWidth = 100.0f;
@@ -49,7 +56,7 @@ private:
 	float windowBuffer;
 	bool** collidable;
 
-	int score;
+	int score = 0;
 
 public:
 	App(const char* title, int screenWidth, int screenHeight, int screenBpp);
@@ -64,4 +71,5 @@ public:
 	void Collisions();
 	void PlayerMove();
 	void Editor();
+	void Pause();
 };

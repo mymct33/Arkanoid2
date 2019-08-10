@@ -96,23 +96,28 @@ void App::Update()
 	// main game
 	if (scene == 1)
 	{
-		PlayerMove();
-
-		bFreeze = 1.0f;
-
-		Collisions();
-		
+		if (pause == false)
+		{
+			PlayerMove();
+			freeze = 1.0f;
+			Collisions();
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape) && pause == false)
+		{
+			pause = true;
+		}
+		Pause();
 	}
 
 	//editor
 	if (scene == 2)
 	{
-		bFreeze = 0.0f;
+		freeze = 0.0f;
 		Editor();
 	}
 
 	// Ball moves per frame
-	ball.move((ballSpeedX * deltaTime) * bFreeze, (ballSpeedY * deltaTime) * bFreeze);
+	ball.move((ballSpeedX * deltaTime) * freeze, (ballSpeedY * deltaTime) * freeze);
 }
 
 void App::Draw()
@@ -121,7 +126,6 @@ void App::Draw()
 	window.clear();
 	window.setView(view);
 
-	ImGui::SFML::Render(window);
 
 	if(scene == 1)
 	{
@@ -156,6 +160,7 @@ void App::Draw()
 		}
 	}
 
+	ImGui::SFML::Render(window);
 	window.display();
 }
 
@@ -253,7 +258,7 @@ void App::Collisions()
 				ballSpeedY = -ballSpeedY;
 				collidable[i][j] = false;
 				++score;
-				std::cout << score + "\n";
+				std::cout << score << std::endl;
 			}
 		}
 	}
@@ -264,15 +269,15 @@ void App::PlayerMove()
 	// Reading player input to move paddle
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 	{
-		paddle.move(paddleSpeed * deltaTime, 0.0f);
-		pLeft.move(paddleSpeed * deltaTime, 0.0f);
-		pRight.move(paddleSpeed * deltaTime, 0.0f);
+		paddle.move(paddleSpeed * deltaTime * freeze, 0.0f);
+		pLeft.move(paddleSpeed * deltaTime * freeze, 0.0f);
+		pRight.move(paddleSpeed * deltaTime * freeze, 0.0f);
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
 	{
-		paddle.move(-paddleSpeed * deltaTime, 0.0f);
-		pLeft.move(-paddleSpeed * deltaTime, 0.0f);
-		pRight.move(-paddleSpeed * deltaTime, 0.0f);
+		paddle.move(-paddleSpeed * deltaTime * freeze, 0.0f);
+		pLeft.move(-paddleSpeed * deltaTime * freeze, 0.0f);
+		pRight.move(-paddleSpeed * deltaTime * freeze, 0.0f);
 	}
 
 }
@@ -294,5 +299,58 @@ void App::Editor()
 				}
 			}
 		}
+	}
+}
+
+void App::Pause()
+{
+	if (pause == true)
+	{
+		freeze = 0.0f;
+		ImGui::Begin("Menu");
+		if (ImGui::Button("Resume"))
+		{
+			pause = false;
+		}
+		if (ImGui::Button("Save Test"))
+		{
+			/*while (saved == false)
+			{
+				++saveCount;
+				save.open(saveCount + " Save.txt");
+				while (std::getline(save, line))
+				{
+					++lineCount;
+				}
+				if (lineCount == 0)
+				{
+					for (int i = 0; i < ROW; ++i)
+					{
+						for (int j = 0; j < COL; ++j)
+						{
+							if (collidable[i][j])
+							{
+								save << i << " " << j << std::endl;
+							}
+						}
+					}
+					saved = true;
+					save.close();
+				}
+			}*/
+		}
+		if (ImGui::Button("Main Menu"))
+		{
+			scene = 0;
+		}
+		if (ImGui::Button("Quit"))
+		{
+			window.close();
+		}
+		ImGui::End();
+	}
+	if (pause == false)
+	{
+		freeze = 1.0f;
 	}
 }
