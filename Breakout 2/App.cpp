@@ -112,8 +112,16 @@ void App::Update()
 	//editor
 	if (scene == 2)
 	{
-		freeze = 0.0f;
-		Editor();
+		Pause();
+		if (pause == false)
+		{
+			freeze = 0.0f;
+			Editor();
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape) && pause == false)
+		{
+			pause = true;
+		}
 	}
 
 	// Ball moves per frame
@@ -207,7 +215,6 @@ void App::Collisions()
 	if (ball.getPosition().y > window.getSize().y - radius * 2.0f)
 	{
 		ballSpeedY = -ballSpeedY;
-		//window.close();
 	}
 
 	// Paddle on Wall collision
@@ -304,7 +311,7 @@ void App::Editor()
 
 void App::Pause()
 {
-	if (pause == true)
+	if (pause == true || scene == 2)
 	{
 		freeze = 0.0f;
 		ImGui::Begin("Menu");
@@ -312,33 +319,40 @@ void App::Pause()
 		{
 			pause = false;
 		}
-		if (ImGui::Button("Save Test"))
+		if (ImGui::Button("Save"))
 		{
-			/*while (saved == false)
+			save.open("Save.txt");
+			if (save.is_open())
 			{
-				++saveCount;
-				save.open(saveCount + " Save.txt");
-				while (std::getline(save, line))
+				for (int i = 0; i < ROW; ++i)
 				{
-					++lineCount;
-				}
-				if (lineCount == 0)
-				{
-					for (int i = 0; i < ROW; ++i)
+					for (int j = 0; j < COL; ++j)
 					{
-						for (int j = 0; j < COL; ++j)
-						{
-							if (collidable[i][j])
-							{
-								save << i << " " << j << std::endl;
-							}
-						}
+						save << i << " " << j;
+						save << " " << collidable << std::endl;
+						std::cout << i << " " << j << " " << collidable[i][j] << std::endl;
 					}
-					saved = true;
-					save.close();
 				}
-			}*/
+				save.close();
+			}
 		}
+		/*if (ImGui::Button("Load Test"))
+		{
+			save.open("Save.txt");
+			if (save.is_open())
+			{
+				for (int i = 0; i < ROW; i++)
+				{
+					save >> bricks[i];
+					for (int j = 0; i < COL; j++)
+					{
+						save >> bricks[j];
+						save >> collidable[i][j];
+					}
+				}
+				save.close();
+			}
+		}*/
 		if (ImGui::Button("Main Menu"))
 		{
 			scene = 0;
